@@ -80,11 +80,11 @@ WSGI_APPLICATION = 'UniversityPortal.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'universityportaldb',
-        'USER': 'abdullaomar',
-        'PASSWORD': '123123',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'zIeAtihFAotWdxPuSzCRPIKIHcrtdzJX',
+        'HOST': 'gondola.proxy.rlwy.net',
+        'PORT': '47864',
     }
 }
 
