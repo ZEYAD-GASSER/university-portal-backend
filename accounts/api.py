@@ -16,6 +16,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
+import re
 
 router = Router()
 api = NinjaExtraAPI()
@@ -51,6 +52,20 @@ class AddStudentSchema(Schema):
     level: str
     department: str   
 
+
+
+def validate_password(password: str):
+    if len(password) < 8:
+        raise HttpError(400, "Password must be at least 8 characters.")
+    if not re.search(r"[A-Z]", password):
+        raise HttpError(400, "Password must include at least one uppercase letter.")
+    if not re.search(r"[a-z]", password):
+        raise HttpError(400, "Password must include at least one lowercase letter.")
+    if not re.search(r"[0-9]", password):
+        raise HttpError(400, "Password must include at least one digit.")
+    if not re.search(r"[!@#$%^&*()_+]", password):
+        raise HttpError(400, "Password must include at least one special character.")
+
 @api.post("/login_student")
 def Slogin(request, data: UserLoginSchema):
     try:
@@ -72,7 +87,7 @@ def Slogin(request, data: UserLoginSchema):
 def Alogin(request, data: AdminLoginSchema):
     try:
         admin = Admin.objects.get(email = data.email)
-        if admin.password == data.password:
+        if check_password(data.password, admin.password):
             payload = {
                 "id": admin.id,
                 "email": admin.email,
@@ -90,6 +105,7 @@ def new_password(request, data: PasswordResetSchema):
     user = verify_token(data.token)
     if user is None:
         raise HttpError(400, "Invalid or expired token")
+    validate_password(data.password)
     try:
         user.password = make_password(data.password)
         user.password_reset_token = None
