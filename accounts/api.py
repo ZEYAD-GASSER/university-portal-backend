@@ -105,7 +105,10 @@ def new_password(request, data: PasswordResetSchema):
     user = verify_token(data.token)
     if user is None:
         raise HttpError(400, "Invalid or expired token")
-    validate_password(data.password)
+    try:
+        validate_password(data.password)
+    except:
+        raise HttpError(400, "Password must be at least 8 characters, has uppercase, lowercase, specialand numerical charachters.")
     try:
         user.password = make_password(data.password)
         user.password_reset_token = None
