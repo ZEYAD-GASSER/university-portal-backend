@@ -69,6 +69,15 @@ def Slogin(request, data: UserLoginSchema):
                 "exp": datetime.utcnow() + timedelta(minutes=60)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+            try:
+                subject = 'Welcome to Our Platform'
+                message = f'Dear user email sent successfully...'
+                email_from = settings.EMAIL_HOST_USER
+                recipient_list = [data.email]
+                result = send_mail(subject, message, email_from, recipient_list, fail_silently=True)
+            except Exception as e:
+                logger.error(f"Email sending error for {user_email}: {str(e)}")
+                return False
             return {"token": token, "message": "Login successful"}
         else:
             raise HttpError(401, "Invalid password")
@@ -152,17 +161,8 @@ def send_welcome_email(user_email, user_name, reset_token):
         message = f'Dear {user_name},\n\nYour account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for joining us.'
         email_from = settings.EMAIL_HOST_USER
         recipient_list = [user_email]
-        
-        # Use fail_silently=True to prevent email errors from breaking the request
         result = send_mail(subject, message, email_from, recipient_list, fail_silently=True)
         
-        if result == 1:
-            logger.info(f"Welcome email sent successfully to {user_email}")
-            return True
-        else:
-            logger.warning(f"Failed to send welcome email to {user_email}")
-            return False
-            
     except Exception as e:
         logger.error(f"Email sending error for {user_email}: {str(e)}")
         return False
