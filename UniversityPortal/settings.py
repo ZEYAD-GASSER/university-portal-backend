@@ -149,7 +149,7 @@ TEMPLATES = [
         },
     },
 ]
-
+"""
 # Email settings
 EMAIL_HOST_USER = "aabdula2712@gmail.com"  # Your email address
 EMAIL_HOST_PASSWORD = "ikzueejigtnalnqn"  # Your email password
@@ -157,3 +157,16 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # or your email provider
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+"""
+
+EMAIL_BACKEND = "sendgrid_backend.backend.SendgridBackend"
+
+# Store API key in environment variable for security
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+
+# The email you verified in Single Sender Verification (e.g. Gmail)
+DEFAULT_FROM_EMAIL = "aabdula2712@gmail.com"
+
+# Optional debug settings
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # If True, won’t actually send
+SENDGRID_ECHO_TO_STDOUT = True          # Print emails to console too
