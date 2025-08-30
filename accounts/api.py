@@ -69,7 +69,6 @@ def Slogin(request, data: UserLoginSchema):
                 "exp": datetime.utcnow() + timedelta(minutes=60)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-            varia = send_welcome_email(data.email, data.name, token)
             return {"token": token, "message": "Login successful"}
         else:
             raise HttpError(401, "Invalid password")
