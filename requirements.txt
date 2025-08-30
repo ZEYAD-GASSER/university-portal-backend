@@ -8,3 +8,4 @@ psycopg
 Pillow
 rav
 gunicorn==21.2.0
+sendgrid==6.12.2
