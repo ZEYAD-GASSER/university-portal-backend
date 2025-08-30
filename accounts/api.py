@@ -160,7 +160,13 @@ def add_user(request, data: UserRequestSchema):
             department=data.department
         )
         token = create_password_reset_token(user)
-
+        reset_link = f"http://localhost:3000/new_password?token={token}"
+        
+        subject = 'Welcome to Our Platform'
+        message = f'Your account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for signing up.'
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [data.email]
+        return {"message": "Request saved successfully"}
     except Exception as e:
         raise HttpError(400, f"Failed to save request: {str(e)}")
 
