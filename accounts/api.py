@@ -163,13 +163,7 @@ def add_user(request, data: UserRequestSchema):
         reset_link = f"http://localhost:3000/new_password?token={token}"
         
         try:
-            send_mail(
-                subject="Account Approved",
-                message="Your account has been accepted.",
-                from_email="youremail@gmail.com",
-                recipient_list=[student.AcademicEmail],
-                fail_silently=False
-            )
+            x = 1
         except Exception as e:
             print("Email send failed:", e)  # This should show in Railway logs
             return JsonResponse({"message": "Student added but email failed"}, status=200)
