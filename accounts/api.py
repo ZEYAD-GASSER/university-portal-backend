@@ -16,6 +16,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 router = Router()
 api = NinjaExtraAPI()
@@ -102,7 +106,7 @@ def new_password(request, data: PasswordResetSchema):
     except Student.DoesNotExist:
         raise HttpError(404, "User not found")
 
-@api.post("/submit_request")  # Changed from @router.post to @api.post
+@api.post("/submit_request")
 def submit_request(request, data: UserRequestSchema):
     if Student.objects.filter(email=data.email).exists():
         raise HttpError(409, "A student with this email already exists.")
@@ -138,16 +142,44 @@ def get_all_requests(request):
     ]
     return data
 
-@api.post("/add_user")  # Changed from @router.post to @api.post
+def send_welcome_email(user_email, user_name, reset_token):
+    """
+    Send welcome email with proper error handling
+    """
+    try:
+        reset_link = f"https://university-portal-frontend-1.vercel.app/new_password?token={reset_token}"
+        subject = 'Welcome to Our Platform'
+        message = f'Dear {user_name},\n\nYour account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for joining us.'
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [user_email]
+        
+        # Use fail_silently=True to prevent email errors from breaking the request
+        result = send_mail(subject, message, email_from, recipient_list, fail_silently=True)
+        
+        if result == 1:
+            logger.info(f"Welcome email sent successfully to {user_email}")
+            return True
+        else:
+            logger.warning(f"Failed to send welcome email to {user_email}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Email sending error for {user_email}: {str(e)}")
+        return False
+
+@api.post("/add_user")
 def add_user(request, data: UserRequestSchema):
-    print(f"Received add_user request: {data}")  # Debug log
+    logger.info(f"Received add_user request: {data.email}")
     
     if Student.objects.filter(email=data.email).exists():
+        logger.warning(f"User with email {data.email} already exists")
         raise HttpError(409, "A student with this email already exists.")
     if Student.objects.filter(Seat_Number=data.Seat_Number).exists():
+        logger.warning(f"User with seat number {data.Seat_Number} already exists")
         raise HttpError(409, "A student with this Seat number already exists.")
     
     try:
+        # First, create the user
         user = Student.objects.create(
             name=data.name,
             email=data.email,
@@ -156,30 +188,56 @@ def add_user(request, data: UserRequestSchema):
             level=data.level,
             department=data.department
         )
-        print(f"User created successfully: {user.id}")  # Debug log
+        logger.info(f"User created successfully: {user.id} - {user.email}")
         
+        # Generate password reset token
         token = create_password_reset_token(user)
-        reset_link = f"https://university-portal-frontend-1.vercel.app/new_password?token={token}"
-
-        subject = 'Welcome to Our Platform'
-        message = f'Your account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for signing up.'
-        email_from = settings.EMAIL_HOST_USER
-        recipient_list = [data.email]
-        send_mail(subject, message, email_from, recipient_list)
         
-        return {"message": "User added successfully"}
+        # Try to send email, but don't fail if it doesn't work
+        email_sent = send_welcome_email(data.email, data.name, token)
+        
+        # Return success regardless of email status
+        if email_sent:
+            return {
+                "message": "User added successfully and welcome email sent",
+                "user_id": user.id,
+                "email_sent": True
+            }
+        else:
+            return {
+                "message": "User added successfully, but welcome email failed to send",
+                "user_id": user.id,
+                "email_sent": False
+            }
+            
     except Exception as e:
-        print(f"Error in add_user: {str(e)}")  # Debug log
+        logger.error(f"Error in add_user for {data.email}: {str(e)}")
         raise HttpError(400, f"Failed to add user: {str(e)}")
 
-@api.delete("/delete_request/{request_id}")  # Changed from @router.delete to @api.delete
+@api.delete("/delete_request/{request_id}")
 def delete_request(request, request_id: int):
-    print(f"Received delete request for ID: {request_id}")  # Debug log
+    logger.info(f"Received delete request for ID: {request_id}")
     try:
         obj = get_object_or_404(Registration_Request, id=request_id)
         obj.delete()
-        print(f"Request {request_id} deleted successfully")  # Debug log
+        logger.info(f"Request {request_id} deleted successfully")
         return {"message": "Request deleted successfully"}
     except Exception as e:
-        print(f"Error deleting request {request_id}: {str(e)}")  # Debug log
+        logger.error(f"Error deleting request {request_id}: {str(e)}")
         raise HttpError(400, f"Failed to delete request: {str(e)}")
+
+# Add a test endpoint to check email configuration
+@api.post("/test_email")
+def test_email(request):
+    """Test endpoint to check if email is working"""
+    try:
+        result = send_mail(
+            'Test Email',
+            'This is a test email from Django.',
+            settings.EMAIL_HOST_USER,
+            [settings.EMAIL_HOST_USER],  # Send to yourself
+            fail_silently=False
+        )
+        return {"message": "Email test successful", "result": result}
+    except Exception as e:
+        return {"message": f"Email test failed: {str(e)}", "result": 0}
