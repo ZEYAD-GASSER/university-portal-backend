@@ -166,7 +166,7 @@ def add_user(request, data: UserRequestSchema):
         message = f'Your account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for signing up.'
         email_from = settings.EMAIL_HOST_USER
         recipient_list = [data.email]
-        send_mail(subject, message, email_from, recipient_list)
+        send_mail(subject, message, email_from, recipient_list, fail_silently=False)
         return {"message": "Request saved successfully"}
     except Exception as e:
         raise HttpError(400, f"Failed to save request: {str(e)}")
