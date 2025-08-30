@@ -23,19 +23,21 @@ api.register_controllers(NinjaJWTDefaultController)  # JWT controller
 api.add_router("/compsuggs/", compsuggs_router)
 api.add_router("/", router)  # ← ✅ Add this line to register the `router`
 
-
 auth = JWTAuth()
 SECRET_KEY = settings.SECRET_KEY
 
 class UserLoginSchema(Schema):
     email: str
     password: str
+
 class PasswordResetSchema(Schema):
     password: str
     token: str
+
 class AdminLoginSchema(Schema):
     email: str
-    password:str
+    password: str
+
 class UserRequestSchema(Schema):
     name: str
     email: str
@@ -43,6 +45,7 @@ class UserRequestSchema(Schema):
     Seat_Number: str
     level: str
     department: str
+
 class AddStudentSchema(Schema):
     name: str
     email: str
@@ -99,7 +102,7 @@ def new_password(request, data: PasswordResetSchema):
     except Student.DoesNotExist:
         raise HttpError(404, "User not found")
 
-@router.post("/submit_request")
+@api.post("/submit_request")  # Changed from @router.post to @api.post
 def submit_request(request, data: UserRequestSchema):
     if Student.objects.filter(email=data.email).exists():
         raise HttpError(409, "A student with this email already exists.")
@@ -118,7 +121,6 @@ def submit_request(request, data: UserRequestSchema):
     except Exception as e:
         raise HttpError(400, f"Failed to save request: {str(e)}")
 
-
 @api.get("/get_all_requests")
 def get_all_requests(request):
     requests = Registration_Request.objects.all()
@@ -136,11 +138,13 @@ def get_all_requests(request):
     ]
     return data
 
-@router.post("/add_user")
+@api.post("/add_user")  # Changed from @router.post to @api.post
 def add_user(request, data: UserRequestSchema):
+    print(f"Received add_user request: {data}")  # Debug log
+    
     if Student.objects.filter(email=data.email).exists():
         raise HttpError(409, "A student with this email already exists.")
-    if Student.objects.filter(Seat_Number= data.Seat_Number).exists():
+    if Student.objects.filter(Seat_Number=data.Seat_Number).exists():
         raise HttpError(409, "A student with this Seat number already exists.")
     
     try:
@@ -152,6 +156,8 @@ def add_user(request, data: UserRequestSchema):
             level=data.level,
             department=data.department
         )
+        print(f"User created successfully: {user.id}")  # Debug log
+        
         token = create_password_reset_token(user)
         reset_link = f"https://university-portal-frontend-1.vercel.app/new_password?token={token}"
 
@@ -160,14 +166,20 @@ def add_user(request, data: UserRequestSchema):
         email_from = settings.EMAIL_HOST_USER
         recipient_list = [data.email]
         send_mail(subject, message, email_from, recipient_list)
-        return {"message": "Request saved successfully"}
+        
+        return {"message": "User added successfully"}
     except Exception as e:
-        raise HttpError(400, f"Failed to save request: {str(e)}")
+        print(f"Error in add_user: {str(e)}")  # Debug log
+        raise HttpError(400, f"Failed to add user: {str(e)}")
 
-
-@router.delete("/delete_request/{request_id}")
+@api.delete("/delete_request/{request_id}")  # Changed from @router.delete to @api.delete
 def delete_request(request, request_id: int):
-    obj = get_object_or_404(Registration_Request, id=request_id)
-    obj.delete()
-    return {"message": "Request deleted successfully"}
-
+    print(f"Received delete request for ID: {request_id}")  # Debug log
+    try:
+        obj = get_object_or_404(Registration_Request, id=request_id)
+        obj.delete()
+        print(f"Request {request_id} deleted successfully")  # Debug log
+        return {"message": "Request deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting request {request_id}: {str(e)}")  # Debug log
+        raise HttpError(400, f"Failed to delete request: {str(e)}")
