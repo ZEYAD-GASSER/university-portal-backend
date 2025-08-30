@@ -193,22 +193,6 @@ def add_user(request, data: UserRequestSchema):
         # Generate password reset token
         token = create_password_reset_token(user)
         
-        # Try to send email, but don't fail if it doesn't work
-        email_sent = send_welcome_email(data.email, data.name, token)
-        
-        # Return success regardless of email status
-        if email_sent:
-            return {
-                "message": "User added successfully and welcome email sent",
-                "user_id": user.id,
-                "email_sent": True
-            }
-        else:
-            return {
-                "message": "User added successfully, but welcome email failed to send",
-                "user_id": user.id,
-                "email_sent": False
-            }
             
     except Exception as e:
         logger.error(f"Error in add_user for {data.email}: {str(e)}")
