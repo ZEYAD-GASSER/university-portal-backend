@@ -84,9 +84,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': "railway",
         'USER': "postgres",
-        'PASSWORD': "zIeAtihFAotWdxPuSzCRPIKIHcrtdzJX",
-        'HOST': "gondola.proxy.rlwy.net",
-        'PORT': "47864"
+        'PASSWORD': "BkMWMctVqYOXAmnUxLwnAuzVbTmpMTMr",
+        'HOST': "tramway.proxy.rlwy.net",
+        'PORT': "34628"
     }
 }
 
@@ -154,6 +154,6 @@ TEMPLATES = [
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
 EMAIL_HOST_USER = "aabdula2712@gmail.com"  # Your email address
-EMAIL_HOST_PASSWORD = "njwletegsbhqgsou"  # Your email password
+EMAIL_HOST_PASSWORD = "ikzueejigtnalnqn"  # Your email password
 EMAIL_PORT = 465  # SMTP port
 EMAIL_USE_SSL = True  # Use SSL for secure connection
