@@ -18,10 +18,6 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 import logging
 
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-
-
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -146,6 +142,7 @@ def get_all_requests(request):
     ]
     return data
 
+
 @router.post("/add_user")
 def add_user(request, data: UserRequestSchema):
     if Student.objects.filter(email=data.email).exists():
@@ -167,23 +164,13 @@ def add_user(request, data: UserRequestSchema):
         
         subject = 'Welcome to Our Platform'
         message = f'Your account has been accepted! Here is the password reset link:\n{reset_link}\n\nThank you for signing up.'
-
-        # Hardcoded SendGrid API key and sender
-        SENDGRID_API_KEY = "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"
-        FROM_EMAIL = "aabdula2712@gmail.com"
-
-        sg_message = Mail(
-            from_email=FROM_EMAIL,
-            to_emails=data.email,
-            subject=subject,
-            plain_text_content=message
-        )
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
-        sg.send(sg_message)
-
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [data.email]
+        send_mail(subject, message, email_from, recipient_list, fail_silently=False)
         return {"message": "Request saved successfully"}
     except Exception as e:
         raise HttpError(400, f"Failed to save request: {str(e)}")
+
 
 @router.delete("/delete_request/{request_id}")
 def delete_request(request, request_id: int):
