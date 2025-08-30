@@ -159,8 +159,8 @@ def add_user(request, data: UserRequestSchema):
             level=data.level,
             department=data.department
         )
+        token = create_password_reset_token(user)
 
-        return {"message": "Request saved successfully"}
     except Exception as e:
         raise HttpError(400, f"Failed to save request: {str(e)}")
 
